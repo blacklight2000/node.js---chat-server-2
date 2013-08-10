@@ -1,0 +1,77 @@
+<!doctype html>
+<html>
+<head>
+<title>Chat Demo</title>
+<style>
+  #chat { height: 400px; }
+  #contentWrapper { display: none; }
+  #chatWrapper { float:left; border: 1px #000 solid; } 
+</style>
+</head>
+<body>
+<div id="screenNameWrapper">
+  <p>Enter a username:</p>
+  <p id="screenNameError"></p>
+  <form id="screenNameForm">
+     <input size="35" id="screenNameTextbox"></input>
+     <input type="submit"></input>
+  </form>
+</div>
+
+<div id="contentWrapper">
+  <div id="chatWrapper">
+     <div id="chat"></div>
+        <form id="send_messageForm">
+        <input size="35" id="messageTextbox"></input>
+        <input type="submit"></input>
+     </form>
+ </div>
+ <div id="users"></div>
+</div>
+
+hello, world!
+<script src="http://code.jquery.com/jquery-latest.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+ $(document).ready(function() {
+    var socket = io.connect()
+    var $screenNameForm = $('#screenNameForm')
+    var $screenNameError = $('#screenNameError')
+    var $screenNameTextbox = $('#screenNameTextbox')
+    var $users = $('#users')
+    var $messageForm = $('#send_messageForm')
+    var $messageTextbox = $('#messageTextbox')
+    var $chat = $('#chat')
+
+    $screenNameForm.submit(function(e) {
+         e.preventDefault()
+         socket.emit('new user', $screenNameTextbox.val(), function(data) {
+          if(data) {
+            $('#screenNameWrapper').hide()
+            $('#contentWrapper').show()
+            } else {
+                $screenNameError.html('This username is taken. Choose another one')
+                }
+         })
+         $screenNameTextbox.val('')
+   })
+    socket.on('usernames', function(data) {
+      var html = ''
+      for (i=0; i < data.length; i++) { html += data[i] + '<br/>' }
+      $users.html(html)
+    });
+    $messageForm.submit(function(e){
+       e.preventDefault()
+       socket.emit('send message',$messageTextbox.val())
+       $messageTextbox.val('')
+    })
+
+    socket.on('new message', function(data) {
+      $chat.append('<b>' + data.screenName  + ": </b>" + data.msg + '<br/>')
+    })
+
+  })
+
+</script>
+</body>
+</html>
